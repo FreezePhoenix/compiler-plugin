@@ -21,6 +21,9 @@ public final class PluginNames {
     public final Names base;
 
     public final Name com_freezephoenix_compiler_PluginBootstraps;
+    public final Name bindingCallsite;
+    public final Name invokingCallsite;
+
     public final Name bindTo;
     public final Name explicitCast;
     public final Name methodType;
@@ -39,6 +42,8 @@ public final class PluginNames {
     public PluginNames(Context context) {
         base = Names.instance(context);
         bindTo = base.fromString("bindTo");
+        bindingCallsite = base.fromString("bindingCallsite");
+        invokingCallsite = base.fromString("invokingCallsite");
         explicitCast = base.fromString("explicitCast");
         methodType = base.fromString("methodType");
         lookup = base.fromString("lookup");

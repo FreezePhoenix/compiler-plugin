@@ -13,41 +13,115 @@
     <properties>
         <java-version>27</java-version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven-dependency-plugin.version>3.8.1</maven-dependency-plugin.version>
     </properties>
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.4.2</version>
-                <configuration>
-                    <archive>
-                        <manifestEntries>
-                            <Add-Exports>jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</Add-Exports>
-                        </manifestEntries>
-                    </archive>
-                </configuration>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>${maven-dependency-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>dependency-properties</id>
+                        <goals>
+                            <goal>properties</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+
+                        <id>default-compile</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>target/classes</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>src/resources</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.0</version>
-                <configuration>
-                    <fork>true</fork>
-                    <compilerVersion>${java-version}</compilerVersion>
-                    <compilerArgs>
-                        <arg>--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</arg>
-                        <arg>--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED</arg>
-                        <arg>--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED</arg>
-                        <arg>--add-exports=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED</arg>
-                        <arg>--add-exports=jdk.compiler/com.sun.tools.javac.jvm=ALL-UNNAMED</arg>
-                        <arg>--add-exports=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED</arg>
-                        <arg>--add-exports=jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED</arg>
-                    </compilerArgs>
-                    <source>${java-version}</source>
-                    <target>${java-version}</target>
-                </configuration>
+                <executions>
+                    <execution>
+                        <id>default-compile</id>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <fork>true</fork>
+                            <outputDirectory>target/bootstrap-classes</outputDirectory>
+                            <compilerVersion>${java-version}</compilerVersion>
+                            <compilerArgs>
+                                <arg>--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</arg>
+                                <arg>--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED</arg>
+                                <arg>--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED</arg>
+                                <arg>--add-exports=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED</arg>
+                                <arg>--add-exports=jdk.compiler/com.sun.tools.javac.jvm=ALL-UNNAMED</arg>
+                                <arg>--add-exports=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED</arg>
+                            </compilerArgs>
+                            <source>${java-version}</source>
+                            <target>${java-version}</target>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>default-bootstrap</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <fork>true</fork>
+                            <compilerVersion>${java-version}</compilerVersion>
+                            <compilerArgs>
+                                <arg>--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</arg>
+                                <arg>--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED</arg>
+                                <arg>--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED</arg>
+                                <arg>--add-exports=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED</arg>
+                                <arg>--add-exports=jdk.compiler/com.sun.tools.javac.jvm=ALL-UNNAMED</arg>
+                                <arg>--add-exports=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED</arg>
+                                <arg>-J--add-exports="jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED"</arg>
+                                <arg>-J--add-exports="jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED"</arg>
+                                <arg>-J--add-exports="jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED"</arg>
+                                <arg>-J--add-exports="jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED"</arg>
+                                <arg>-J--add-exports="jdk.compiler/com.sun.tools.javac.jvm=ALL-UNNAMED"</arg>
+                                <arg>-J--add-exports="jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED"</arg>
+                                <arg>-J--add-exports="jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED"</arg>
+                                <arg>-J--patch-module=jdk.compiler=${com.freezephoenix:compiler-patch:jar}</arg>
+                                <arg>-classpath</arg>
+                                <arg>${java.class.path};target/bootstrap-classes;target/classes</arg>
+                                <arg>-Xplugin:CompilerPlugin</arg>
+                            </compilerArgs>
+                            <source>${java-version}</source>
+                            <target>${java-version}</target>
+                        </configuration>
+                    </execution>
+                </executions>
+
             </plugin>
         </plugins>
+
     </build>
+    <dependencies>
+        <dependency>
+            <groupId>com.freezephoenix</groupId>
+            <artifactId>compiler-patch</artifactId>
+            <version>1.1-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
 </project>

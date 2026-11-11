@@ -20,8 +20,6 @@ import java.util.Map;
 
 public final class MethodBindScanner extends TreeTranslator {
 
-    private final Context context;
-
     private final JCTree.JCCompilationUnit compilationUnit;
     private final Resolve rs;
     private final JavacTrees trees;
@@ -39,7 +37,6 @@ public final class MethodBindScanner extends TreeTranslator {
     }
 
     public MethodBindScanner(Context context, JCTree.JCCompilationUnit compilationUnit) {
-        this.context = context;
         this.syms = PluginSymtab.instance(context);
         this.names = PluginNames.instance(context);
         this.make = TreeMaker.instance(context);
@@ -66,6 +63,15 @@ public final class MethodBindScanner extends TreeTranslator {
         return null;
     }
 
+    @Override public void visitVarDef(JCTree.JCVariableDecl tree) {
+        super.visitVarDef(tree);
+        if(tree.init instanceof JCTree.JCIdent ident) {
+            if(getMethodTypeConstantNullable(ident) instanceof Type.MethodType methodType) {
+                tree.sym.setData(methodType);
+            }
+        }
+    }
+
     @Override
     public void visitClassDef(JCTree.JCClassDecl tree) {
         KlassInfo prevKlassInfo = kInfo;
@@ -87,7 +93,7 @@ public final class MethodBindScanner extends TreeTranslator {
 
 
     private boolean isMethodHandlesLookup(JCTree.JCExpression expression) {
-        return isOverrides(TreeInfo.symbolFor(expression), syms.lookup);
+        return expression instanceof JCMethodInvocation invocation && isOverrides(TreeInfo.symbol(invocation.meth), syms.lookup);
     }
 
     private boolean isDynalinkHandlesLookup(JCTree.JCExpression expression) {
@@ -108,26 +114,26 @@ public final class MethodBindScanner extends TreeTranslator {
         super.visitApply(tree);
         if (result instanceof JCTree.JCMethodInvocation invocation) {
             if (invocation.meth instanceof JCTree.JCFieldAccess access) {
-                if (isOverrides(access.sym, syms.baseBindTo)) {
-                    if (getMethodHandleConstantNullable(access.selected) instanceof Symbol.MethodHandleSymbol mhs) {
-                        result = make.App(
-                                make.Ident(new Symbol.DynamicMethodSymbol(
-                                        mhs.name,
-                                        syms.base.noSymbol,
-                                        syms.bindTo,
-                                        types.createMethodTypeWithParameters(access.sym.type, List.of(mhs.owner.type)),
-                                        new PoolConstant.LoadableConstant[]{syms.baseBindTo, mhs}
-                                )),
-                                invocation.args
-                        );
-                    }
-                } else if (isOverrides(access.sym.baseSymbol(), syms.baseInvoke)) {
+                if (isOverrides(access.sym, syms.bindTo)) {
                     if (getMethodHandleConstantNullable(access.selected) instanceof Symbol.MethodHandleSymbol mhs) {
                         result = make.App(
                                 make.Ident(new Symbol.DynamicMethodSymbol(
                                         names.base.underscore,
                                         syms.base.noSymbol,
-                                        syms.invoke,
+                                        syms.bindingCallsite,
+                                        access.sym.type,
+                                        new PoolConstant.LoadableConstant[]{mhs}
+                                )),
+                                invocation.args
+                        );
+                    }
+                } else if (isOverrides(access.sym.baseSymbol(), syms.invoke)) {
+                    if (getMethodHandleConstantNullable(access.selected) instanceof Symbol.MethodHandleSymbol mhs) {
+                        result = make.App(
+                                make.Ident(new Symbol.DynamicMethodSymbol(
+                                        names.base.underscore,
+                                        syms.base.noSymbol,
+                                        syms.invokingCallsite,
                                         access.sym.type,
                                         new PoolConstant.LoadableConstant[]{mhs}
                                 )),
@@ -177,7 +183,7 @@ public final class MethodBindScanner extends TreeTranslator {
                                     syms.base.noSymbol,
                                     syms.explicitCast,
                                     syms.base.methodTypeType,
-                                    new PoolConstant.LoadableConstant[]{new Type.MethodType(types.tail, types.head, List.nil(), syms.base.methodClass)}
+                                    new PoolConstant.LoadableConstant[]{ new Type.MethodType(types.tail, types.head, List.nil(), syms.base.methodClass) }
                             )
                     );
                 }

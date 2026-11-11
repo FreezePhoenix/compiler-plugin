@@ -23,14 +23,14 @@ public class PluginSymtab {
     public final Symbol.MethodHandleSymbol dynaFindVirtual;
     public final Symbol.MethodHandleSymbol dynaFindStatic;
 
-    public final Symbol.MethodHandleSymbol bindTo;
-    public final Symbol.MethodHandleSymbol invoke;
+    public final Symbol.MethodHandleSymbol bindingCallsite;
+    public final Symbol.MethodHandleSymbol invokingCallsite;
 
     public final Symbol.MethodHandleSymbol lookup;
     public final Symbol.MethodHandleSymbol explicitCast;
 
-    public final Symbol.MethodHandleSymbol baseBindTo;
-    public final Symbol.MethodHandleSymbol baseInvoke;
+    public final Symbol.MethodHandleSymbol bindTo;
+    public final Symbol.MethodHandleSymbol invoke;
 
     public final Symbol.MethodHandleSymbol methodType1;
     public final Symbol.MethodHandleSymbol methodType2;
@@ -75,27 +75,24 @@ public class PluginSymtab {
                 base.constantBootstrapsType.tsym
         ).asHandle();
 
-        this.bindTo = new Symbol.MethodSymbol(
+        final Type.MethodType indyType = new Type.MethodType(
+                List.of(base.methodHandleLookupType, base.stringType, base.methodTypeType, base.methodHandleType),
+                callSite.type,
+                List.nil(),
+                base.methodClass
+        );
+
+        this.bindingCallsite = new Symbol.MethodSymbol(
                 Flags.STATIC | Flags.PUBLIC,
-                names.bindTo,
-                new Type.MethodType(
-                        List.of(base.methodHandleLookupType, base.stringType, base.methodTypeType, base.methodHandleType, base.methodHandleType),
-                        callSite.type,
-                        List.nil(),
-                        base.methodClass
-                ),
+                names.bindingCallsite,
+                indyType,
                 pluginBootstraps
         ).asHandle();
 
-        this.invoke = new Symbol.MethodSymbol(
+        this.invokingCallsite = new Symbol.MethodSymbol(
                 Flags.STATIC | Flags.PUBLIC,
-                names.base.invoke,
-                new Type.MethodType(
-                        List.of(base.methodHandleLookupType, base.stringType, base.methodTypeType, base.methodHandleType),
-                        callSite.type,
-                        List.nil(),
-                        base.methodClass
-                ),
+                names.invokingCallsite,
+                indyType,
                 pluginBootstraps
         ).asHandle();
 
@@ -189,7 +186,7 @@ public class PluginSymtab {
                 base.methodHandlesType.tsym
         ).asHandle();
 
-        this.baseBindTo = new Symbol.MethodSymbol(
+        this.bindTo = new Symbol.MethodSymbol(
                 Flags.PUBLIC,
                 names.bindTo,
                 new Type.MethodType(
@@ -201,7 +198,7 @@ public class PluginSymtab {
                 base.methodHandleType.tsym
         ).asHandle();
 
-        this.baseInvoke = new Symbol.MethodSymbol(
+        this.invoke = new Symbol.MethodSymbol(
                 Flags.PUBLIC | Flags.FINAL | Flags.NATIVE | Flags.VARARGS | Flags.SIGNATURE_POLYMORPHIC,
                 names.base.invoke,
                 new Type.MethodType(

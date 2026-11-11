@@ -1,13 +1,17 @@
 package com.freezephoenix.compiler;
 
+import jdk.dynalink.linker.support.Lookup;
+
 import java.lang.invoke.*;
 
 @SuppressWarnings("unused")
-public class PluginBootstraps {
-    public static CallSite bindTo(MethodHandles.Lookup unusedLookup, String unusedName, MethodType type, MethodHandle baseBindTo, MethodHandle handle) {
-        return new ConstantCallSite(baseBindTo.bindTo(handle).asType(type));
+public enum PluginBootstraps {;
+    public static CallSite bindingCallsite(MethodHandles.Lookup unusedLookup, String unusedName, MethodType type, MethodHandle handle) {
+        final MethodHandle bindTo = new Lookup(MethodHandles.lookup()).findVirtual(MethodHandle.class, "bindTo", MethodType.methodType(MethodHandle.class, Object.class));
+        return new ConstantCallSite(bindTo.bindTo(handle));
     }
-    public static CallSite invoke(MethodHandles.Lookup unusedLookup, String unusedName, MethodType type, MethodHandle handle) {
+
+    public static CallSite invokingCallsite(MethodHandles.Lookup unusedLookup, String unusedName, MethodType type, MethodHandle handle) {
         return new ConstantCallSite(handle.asType(type));
     }
 }
